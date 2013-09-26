@@ -1,4 +1,4 @@
-;;; list-package-extras.el --- Extras for list-packages  -*- lexical-binding: t; -*-
+;;; list-packages-extras.el --- Extras for list-packages  -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2013  Alessandro Piras
 
@@ -956,5 +956,5 @@ Provides:
         ("C" lpe:clear-all-tags))))
 
 
-(provide 'list-package-ext)
-;;; list-package-extras.el ends here
+(provide 'list-packages-ext)
+;;; list-packages-extras.el ends here
