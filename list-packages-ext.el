@@ -21,16 +21,40 @@
 ;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 ;;; Commentary:
-
-;; TODO: undo support
 ;;
+;; This package adds tag and filtering capabilities to
+;; `package-menu-mode'.
+;;
+;; To activate this package, add this to your .emacs:
+;;
+;; (add-hook 'package-menu-mode-hook (lambda () (list-packages-ext-mode 1)))
+;;
+;; The user can tag the packages with `lpe:tag', filter by regular
+;; expression with `lpe:filter-with-regexp', filter with by tag with
+;; `lpe:filter-by-tag-expr'.
+
+;; The tags hidden and starred have special meanings: If a package is
+;; tagged as hidden, it is not shown in the package list, unless
+;; viewing hidden packages is activated, see `lpe:show-hidden-toggle'.
+;; When a package is tagged as "starred", an indicator is shown in the
+;; fringe on the left side.
+;; The commands `lpe:hide-package' and `lpe:star' toggle the "hidden"
+;; and "starred" tags.
+;; All these commands can be used on the active region.
+;;
+;; This library also offers an annotation subsystem.  Notes can be set
+;; for a package using `lpe:edit-package-notes': this function brings
+;; up a buffer where the user can edit the notes, and save them with
+;; C-c C-c.
+;;
+;; See the help of the minor mode for an overview of the keys.
+
+;;; Code:
 
 (require 'cl-lib)
 (require 's)
 (require 'ht)
 (require 'persistent-soft)
-
-;;; Code:
 
 ;;;;  Macros
 
@@ -371,6 +395,7 @@ The syntax for the operators can be controlled binding
 ;;; XXX other ugly variable that oughts to be encapsulated
 (defvar lpe:*package* nil)
 
+;;;###autoload
 (defun lpe:edit-package-notes (package)
   "Opens a buffer where the user can enter notes about PACKAGE."
   (interactive (list (lpe::package-at-point)))
@@ -447,6 +472,7 @@ The syntax for the operators can be controlled binding
 
 ;;;;  Minor mode
 
+;;;###autoload
 (define-minor-mode list-packages-ext-mode
     "Some extras for the *Packages* buffer (see `list-packages').
 Provides:
@@ -762,7 +788,26 @@ Provides:
 
 ;;; Tagging
 
+;;;###autoload
 (defun* lpe:tag (taglist &optional add)
+  "Applies the tags in TAGLIST to the package at the current
+line, or to the packages in the active region.
+
+When called interactively, it prompts the user for the list of
+comma separated tags to apply to the package at the current line
+or to the packages in the active region.
+
+When called on a region, or on a single line with prefix argument,
+the command will work in 'Modify' mode: the tags entered by the user
+will be merged with the already present tags; a tag can be removed
+from a package applying it in its negated form. The negation of a
+tag is expressed prepending `!' to the tag,
+e.g. to remove a tag 'foo', one would tag the package with '!foo'.
+
+If calling it with no active region, or to the active region with
+a prefix command, the command works in 'Set' mode: the tags
+entered by the user will substitute the current tag set of the
+package, or list of packages if the region is active."
   (interactive (let* ((add-mode-p (or (and current-prefix-arg
                                            (not (region-active-p)))
                                       (and (not current-prefix-arg)
@@ -794,6 +839,7 @@ Provides:
     (lpe::update-all))
   (lpe::update-minibuffer-info))
 
+;;;###autoload
 (defun lpe:hide-package ()
   (interactive)
   (lpe::tag% '("hidden") (if (region-active-p)
@@ -810,11 +856,13 @@ Provides:
   (lpe::update-minibuffer-info))
 
 
+;;;###autoload
 (defun lpe:apply-last-tags ()
   (interactive)
   (lpe:tag lpe::*last-applied-tags*))
 
 
+;;;###autoload
 (defun lpe:star ()
   (interactive)
   (lpe::tag% '("starred")
@@ -830,13 +878,16 @@ Provides:
   (lpe::update-minibuffer-info))
 
 
+;;;###autoload
 (defun lpe:show-hidden-toggle ()
+  "Toggles showing of hidden packages."
   (interactive)
   (setq lpe::*show-hidden-p* (not lpe::*show-hidden-p*))
   (lpe::update-all))
 
 
 (defun lpe:clear-all-tags ()
+  "Deletes all the tags."
   (interactive)
   (when (yes-or-no-p "Are you sure you want to clear all the tags? ")
     (lpe::clear-tags)
@@ -845,7 +896,16 @@ Provides:
 
 ;;; filtering
 
+;;;###autoload
 (defun lpe:filter-by-tag-expr (filter-str)
+  "Filters the list of packages with FILTER-STR.
+When called interactively, it prompts the user for a tag filter expression.
+A tag filter like
+  (tag1 AND tag2 AND NOT tag3) or tag4
+is expressed as (using the default operator syntax)
+  tag1,tag2,!tag3/tag4
+The syntax for the operators can be controlled binding
+`lpe::*tag-expr-and*', `lpe::*tag-expr-or*' and `lpe::*tag-expr-not*' "
   (interactive (list (lpe::tag-expr-read "Filter (tag expression): ")))
   (cond ((s-blank? filter-str)
          (lpe::show-all-lines)
@@ -864,20 +924,27 @@ Provides:
          (lpe::update-all))))
 
 
+;;;###autoload
 (defun lpe:filter-with-regex (regex)
+  "Filters the packages using regex. By default, only the packages name are searched.
+To activate searching in the package summary, see `lpe:search-in-summary-toggle'."
   (interactive "sFilter (regex): ")
   (lpe::set-filter (lpe::regex-filter regex) (format "/%s/" regex))
   (lpe::update-all))
 
 
+;;;###autoload
 (defun lpe:search-in-summary-toggle ()
+  "Toggles searching in package summary with `lpe:filter-with-regex'."
   (interactive)
   (setq lpe::search-in-summary
         (not lpe::search-in-summary))
   (lpe::update-all))
 
 
+;;;###autoload
 (defun lpe:filters-history-forward ()
+  "Goes forward to the next search in the search history."
   (interactive)
   (if (zerop lpe::*filters-history-pos*)
       (error "Already at the newest filter.")
@@ -885,7 +952,9 @@ Provides:
     (lpe::update-all)))
 
 
+;;;###autoload
 (defun lpe:filters-history-backward ()
+  "Goes back to the previous search."
   (interactive)
   (if (>= lpe::*filters-history-pos* (1- (length lpe::*filters-history*)))
       (error "End of history.")
@@ -893,7 +962,9 @@ Provides:
     (lpe::update-all)))
 
 
+;;;###autoload
 (defun lpe:refresh ()
+  "Refreshes the buffer."
   (interactive)
   (revert-buffer)
   (lpe::update-all))
@@ -905,6 +976,7 @@ Provides:
 ;;;;  Post command hook
 
 
+;;;###autoload
 (defun lpe::post-command-hook ()
   (when (and (eq major-mode 'package-menu-mode)
              list-packages-ext-mode
@@ -939,8 +1011,8 @@ Provides:
                   (kbd (car kbdef))
                 (cadr kbdef)))))
   (dk '(("t" lpe:tag)
-        ("f" lpe:filter-by-tag-expr)
-        ("F" lpe:filter-with-regex)
+        ("F" lpe:filter-by-tag-expr)
+        ("f" lpe:filter-with-regex)
         ("H" lpe:show-hidden-toggle)
         ("v" lpe:search-in-summary-toggle)
         ("g" lpe:refresh)
