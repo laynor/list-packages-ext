@@ -30,7 +30,7 @@
 ;; (add-hook 'package-menu-mode-hook (lambda () (list-packages-ext-mode 1)))
 ;;
 ;; The user can tag the packages with `lpe:tag', filter by regular
-;; expression with `lpe:filter-with-regexp', filter with by tag with
+;; expression with `lpe:filter-with-regexp', filter by tag with
 ;; `lpe:filter-by-tag-expr'.
 
 ;; The tags hidden and starred have special meanings: If a package is
