@@ -30,7 +30,7 @@
 ;; (add-hook 'package-menu-mode-hook (lambda () (list-packages-ext-mode 1)))
 ;;
 ;; The user can tag the packages with `lpe:tag', filter by regular
-;; expression with `lpe:filter-with-regexp', filter by tag with
+;; expression with `lpe:filter-with-regexp', filter with by tag with
 ;; `lpe:filter-by-tag-expr'.
 
 ;; The tags hidden and starred have special meanings: If a package is
@@ -114,16 +114,6 @@ See `lpe::all-tags'."
 
 (defvar lpe:*tag-expr-not*  "!"
   "NOT operator representatin in tag filters. See `lpe::read-tags'.")
-
-;;; TODO: remove global variables
-(cl-defstruct (lpe::tag-support (:constructor lpe::make-tag-support)
-                                (:copier lpe::copy-tag-support))
-  object->tags
-  tag->objects
-  and-op
-  or-op
-  not-op
-  basic-tags)
 
 
 (defun lpe::clear-tags ()
@@ -453,6 +443,31 @@ The syntax for the operators can be controlled binding
   "face to fontify Enotify Success messages"
   :group 'package)
 
+(defface 'lpe:filter-indicator-face
+    '((t ((:foreground "dodger-blue"))))
+  "Face used to fontify the 'Filter[...]:' indicator in the minibuffer."
+  :group 'package)
+
+(defface lpe:filter-face
+    '(( t(:foreground "dim grey")))
+  "Face used to fontify the filter representation in the minibuffer."
+  :group 'package)
+
+(defface lpe:tags-indicator-face
+    '((t (:foreground "green")))
+  "Face used to fontify the 'Tags: ' indicator in the minibuffer."
+  :group 'package)
+
+(defface lpe:tags-face
+    '((t (:foreground "dim grey")))
+  "Face used to fontify the tags of the package at the current line in the minibuffer."
+  :group 'package)
+
+(defface lpe:dot-apply-indicator-face
+    '((t (:foreground "Red")))
+  "Face used to fontify the 'Apply with .:' indicator in the minibuffer."
+  :group 'package)
+
 
 ;;;;  Persistence
 
@@ -767,21 +782,24 @@ Provides:
 (defun lpe::format-filter ()
   (format "%-25s %40s"
           (propertize (format "Filter[%s]: " (lpe::filter-type))
-                      'face '((:foreground "dodger-blue")))
+                      'face 'lpe:filter-indicator-face)
           (propertize (lpe::current-filter-string)
-                      'face '((:foreground "dim grey")))))
+                      'face 'lpe:filter-face)))
 
 
 (defun lpe::format-tags ()
   (format "%-25s %40s"
-          (propertize "Tags: " 'face '((:foreground "green")))
-          (s-join "," (lpe::tags-at-point))))
+          (propertize "Tags: " 'face 'lpe:tags-indicator-face)
+          (propertize (s-join "," (lpe::tags-at-point))
+                      'face 'lpe:tags-face)))
+
 
 
 (defun lpe::format-last-applied-tags ()
   (format "%-25s %40s"
-          (propertize "Apply with .: " 'face '((:foreground "Red")))
-          (s-join "," (or lpe::*last-applied-tags* ""))))
+          (propertize "Apply with .: " 'face 'lpe:dot-apply-indicator-face)
+          (propertize (s-join "," (or lpe::*last-applied-tags* ""))
+                      'face 'lpe:tags-face)))
 
 
 ;;;;  User commands
@@ -841,6 +859,7 @@ package, or list of packages if the region is active."
 
 ;;;###autoload
 (defun lpe:hide-package ()
+  "Hides a package from the package list (applying the 'hidden' tag)."
   (interactive)
   (lpe::tag% '("hidden") (if (region-active-p)
                              (lpe::packages-in-region (region-beginning)
@@ -858,12 +877,14 @@ package, or list of packages if the region is active."
 
 ;;;###autoload
 (defun lpe:apply-last-tags ()
+  "Apply the last tags applied with `lpe:tag'."
   (interactive)
   (lpe:tag lpe::*last-applied-tags*))
 
 
 ;;;###autoload
 (defun lpe:star ()
+  "Toggles the starred tag to the current package or the packages in region if it is active."
   (interactive)
   (lpe::tag% '("starred")
              (if (region-active-p)
