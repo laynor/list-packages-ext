@@ -443,13 +443,13 @@ The syntax for the operators can be controlled binding
   "face to fontify Enotify Success messages"
   :group 'package)
 
-(defface 'lpe:filter-indicator-face
+(defface lpe:filter-indicator-face
     '((t ((:foreground "dodger-blue"))))
   "Face used to fontify the 'Filter[...]:' indicator in the minibuffer."
   :group 'package)
 
 (defface lpe:filter-face
-    '(( t(:foreground "dim grey")))
+    '((t (:foreground "dim grey")))
   "Face used to fontify the filter representation in the minibuffer."
   :group 'package)
 
