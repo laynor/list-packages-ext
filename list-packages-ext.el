@@ -641,8 +641,7 @@ Provides:
 ;;;;  Filters
 
 (defvar lpe::*filters-history* nil)
-
-(setq lpe::*filters-history-pos* 0)
+(defvar lpe::*filters-history-pos* 0)
 
 (cl-defstruct (lpe::filter (:constructor lpe::make-filter)
                            (:copier lpe::copy-filter))
