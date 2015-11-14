@@ -969,7 +969,7 @@ To activate searching in the package summary, see `lpe:search-in-summary-toggle'
   (interactive)
   (if (zerop lpe::*filters-history-pos*)
       (error "Already at the newest filter.")
-    (decf lpe::*filters-history-pos*)
+    (cl-decf lpe::*filters-history-pos*)
     (lpe::update-all)))
 
 
@@ -979,7 +979,7 @@ To activate searching in the package summary, see `lpe:search-in-summary-toggle'
   (interactive)
   (if (>= lpe::*filters-history-pos* (1- (length lpe::*filters-history*)))
       (error "End of history.")
-    (incf lpe::*filters-history-pos*)
+    (cl-incf lpe::*filters-history-pos*)
     (lpe::update-all)))
 
 
