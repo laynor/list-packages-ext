@@ -504,6 +504,7 @@ Provides:
          (lpe:activate))
         (t (lpe:deactivate))))
 
+(defvar list-packages-ext-mode-hook nil)
 
 (defun lpe:activate ()
   (apply 'run-hooks list-packages-ext-mode-hook)
