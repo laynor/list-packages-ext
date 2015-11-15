@@ -5,7 +5,7 @@
 ;; Author: Alessandro Piras <laynor@gmail.com>
 ;; Keywords: convenience, tools
 ;; Package-Requires: ((s "1.6.0") (ht "1.5.0") (persistent-soft "0.8.6"))
-;; Version 1.0
+;; Version: 1.0
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
